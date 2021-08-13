@@ -22,7 +22,7 @@ use std::time::SystemTime;
 
 pub fn create_post<'a>(conn: &PgConnection, title: &'a str, body: &'a str) -> Post {
     use schema::posts;
-    let visit_count = Some(0_i64);
+    let visit_count = Some(0_i32);
     let publish_at = Some(SystemTime::now());
     let new_post = NewPost {
         title,
