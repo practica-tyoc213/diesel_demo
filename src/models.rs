@@ -1,15 +1,21 @@
+use super::schema::posts;
+use chrono::NaiveDateTime;
+use diesel::expression::AsExpression;
+use diesel::pg::data_types::PgTimestamp;
+use diesel::query_builder::{BuildQueryResult, QueryBuilder};
+use diesel::sql_types::{Nullable, Timestamp, Timestamptz};
+use diesel::Expression;
+use std::time::SystemTime;
+
 #[derive(Queryable)]
 pub struct Post {
-    pub id: i32,
+    pub id: i64,
     pub title: String,
     pub body: String,
     pub published: bool,
     pub publish_at: Option<SystemTime>,
     pub visit_count: Option<i64>,
 }
-use super::schema::posts;
-use diesel::dsl::Nullable;
-use std::time::SystemTime;
 
 #[derive(Insertable)]
 #[table_name = "posts"]
