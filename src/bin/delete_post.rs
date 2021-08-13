@@ -5,7 +5,7 @@ use diesel_demo::schema::posts::dsl::posts;
 use std::env::args;
 
 fn main() {
-    let target = args().nth(1).expect("Expected a target to match against");
+    let target = Option::expect(args().nth(1), "Expected a target to match against");
     let pattern = format!("%{}%", target);
 
     let connection = establish_connection();

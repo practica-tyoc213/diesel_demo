@@ -18,9 +18,18 @@ pub fn establish_connection() -> PgConnection {
 }
 
 use self::models::{NewPost, Post};
+use std::time::SystemTime;
+
 pub fn create_post<'a>(conn: &PgConnection, title: &'a str, body: &'a str) -> Post {
     use schema::posts;
-    let new_post = NewPost { title, body };
+    let visit_count = 0;
+    let publish_at = SystemTime::now();
+    let new_post = NewPost {
+        title,
+        body,
+        publish_at,
+        visit_count,
+    };
 
     diesel::insert_into(posts::table)
         .values(&new_post)
