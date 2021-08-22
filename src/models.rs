@@ -11,7 +11,7 @@ use std::time::SystemTime;
 // if your struct has both
 // #[derive(AsChangeset)] and #[derive(Identifiable)],
 // you will be able to use the save_changes method
-#[derive(Queryable, AsChangeset, Identifiable, Debug)]
+#[derive(Insertable, Queryable, AsChangeset, Identifiable, Debug)]
 pub struct Post {
     pub id: i32,
     pub title: String,
@@ -22,7 +22,7 @@ pub struct Post {
     pub updated_at: Option<SystemTime>,
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable, Deserialize, Debug)]
 #[table_name = "posts"]
 pub struct NewPost<'a> {
     pub title: &'a str,
