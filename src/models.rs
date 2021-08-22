@@ -7,7 +7,10 @@ use diesel::sql_types::{Nullable, Timestamp, Timestamptz};
 use diesel::Expression;
 use std::time::SystemTime;
 
-#[derive(Queryable)]
+// if your struct has both
+// #[derive(AsChangeset)] and #[derive(Identifiable)],
+// you will be able to use the save_changes method
+#[derive(Queryable, AsChangeset, Identifiable, Debug)]
 pub struct Post {
     pub id: i32,
     pub title: String,
