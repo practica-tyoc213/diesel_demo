@@ -17,7 +17,17 @@ fn main() {
 
     println!("Displaying {} posts", results.len());
     for post in results {
-        println!("{}:{}", post.id, post.title);
+        println!(
+            "{} - {}:{}:[{:?}]",
+            if post.published {
+                "publicado"
+            } else {
+                "no publicado"
+            },
+            post.id,
+            post.title,
+            post.visit_count,
+        );
         println!("-----------\n");
         println!("{}", post.body);
     }
