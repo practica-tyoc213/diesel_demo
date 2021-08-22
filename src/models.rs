@@ -5,6 +5,7 @@ use diesel::pg::data_types::PgTimestamp;
 use diesel::query_builder::{BuildQueryResult, QueryBuilder};
 use diesel::sql_types::{Nullable, Timestamp, Timestamptz};
 use diesel::Expression;
+use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
 // if your struct has both
@@ -21,7 +22,7 @@ pub struct Post {
     pub updated_at: Option<SystemTime>,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[table_name = "posts"]
 pub struct NewPost<'a> {
     pub title: &'a str,

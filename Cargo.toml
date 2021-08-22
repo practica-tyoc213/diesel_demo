@@ -9,3 +9,5 @@ edition = "2018"
 diesel = { version = "1.4.4", features = ["postgres", "chrono"] }
 chrono= "*"
 dotenv = "0.15.0"
+serde_json = "1.0.66"
+serde = { version = "1.0.66", features = ["derive"] }
