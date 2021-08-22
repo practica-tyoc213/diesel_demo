@@ -24,11 +24,13 @@ pub fn create_post<'a>(conn: &PgConnection, title: &'a str, body: &'a str) -> Po
     use schema::posts;
     let visit_count = Some(0_i32);
     let publish_at = Some(SystemTime::now());
+    let updated_at = Some(SystemTime::now());
     let new_post = NewPost {
         title,
         body,
         publish_at,
         visit_count,
+        updated_at,
     };
 
     diesel::insert_into(posts::table)

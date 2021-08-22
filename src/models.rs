@@ -18,6 +18,7 @@ pub struct Post {
     pub published: bool,
     pub publish_at: Option<SystemTime>,
     pub visit_count: Option<i32>,
+    pub updated_at: Option<SystemTime>,
 }
 
 #[derive(Insertable)]
@@ -27,4 +28,5 @@ pub struct NewPost<'a> {
     pub body: &'a str,
     pub publish_at: Option<SystemTime>,
     pub visit_count: Option<i32>,
+    pub updated_at: Option<SystemTime>,
 }

@@ -6,5 +6,6 @@ table! {
         published -> Bool,
         publish_at -> Nullable<Timestamp>,
         visit_count -> Nullable<Int4>,
+        updated_at -> Nullable<Timestamp>,
     }
 }
