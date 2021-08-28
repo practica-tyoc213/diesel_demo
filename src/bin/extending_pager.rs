@@ -2,8 +2,9 @@
 // use diesel::impl_query_id; // deprecated since 1.1.0
 use diesel::pg::Pg;
 use diesel::query_builder::{AsQuery, AstPass, Query, QueryFragment};
+use diesel::query_dsl::limit_dsl::LimitDsl;
 use diesel::sql_types::BigInt;
-use diesel::Expression;
+use diesel::{dsl, Expression};
 use diesel::{PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use diesel::{QueryId, Queryable};
 use diesel_demo::schema::posts;
@@ -33,6 +34,13 @@ impl<T> RunQueryDsl<PgConnection> for Paginated<T> {}
 
 // FIXME: maybe implement this? but not this way?
 // impl<T> QueryDsl for Paginated<T> {}
+impl<T> LimitDsl for Paginated<T> {
+    type Output = Paginated<dsl::Limit<T>>;
+
+    fn limit(self, limit: i64) -> Self::Output {
+        limit
+    }
+}
 
 // Using `trait Paginate` to implement all that
 pub trait Paginate: AsQuery + Sized {
