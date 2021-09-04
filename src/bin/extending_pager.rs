@@ -10,10 +10,10 @@ use diesel::{QueryId, Queryable};
 use diesel_demo::schema::posts;
 
 // Implement `QueryFragment`
-impl<T> QueryFragment<Pg> for Paginated<T>
+impl<T> QueryFragment<Pg> for PaginatedResult<T>
 where
     T: QueryFragment<Pg>,
-    Paginated<T>: LimitDsl,
+    PaginatedResult<T>: LimitDsl,
 {
     fn walk_ast(&self, mut out: AstPass<Pg>) -> QueryResult<()> {
         out.push_sql("select *, count(*) over () from (");
@@ -27,16 +27,16 @@ where
 }
 
 // Whenever you implement `QueryFragment` you need to implement `QueryId`
-impl<T: Query> Query for Paginated<T> {
+impl<T: Query> Query for PaginatedResult<T> {
     type SqlType = (T::SqlType, BigInt);
 }
 
-impl<T> RunQueryDsl<PgConnection> for Paginated<T> {}
+impl<T> RunQueryDsl<PgConnection> for PaginatedResult<T> {}
 
 // FIXME: maybe implement this? but not this way?
 // impl<T> QueryDsl for Paginated<T> {}
-impl<T: LimitDsl + LimitDsl<Output = T>> LimitDsl for Paginated<T> {
-    type Output = Paginated<dsl::Limit<T>>;
+impl<T: LimitDsl + LimitDsl<Output = T>> LimitDsl for PaginatedResult<T> {
+    type Output = PaginatedResult<dsl::Limit<T>>;
 
     fn limit(self, limit: i64) -> Self::Output {
         limit
@@ -45,8 +45,8 @@ impl<T: LimitDsl + LimitDsl<Output = T>> LimitDsl for Paginated<T> {
 
 // Using `trait Paginate` to implement all that
 pub trait Paginate: AsQuery + Sized {
-    fn paginate(self, page: i64) -> Paginated<Self::Query> {
-        Paginated {
+    fn paginate(self, page: i64) -> PaginatedResult<Self::Query> {
+        PaginatedResult {
             query: self.as_query(),
             page,
             per_page: DEFAULT_PER_PAGE,
@@ -58,15 +58,15 @@ impl<T: AsQuery> Paginate for T {}
 const DEFAULT_PER_PAGE: i64 = 10;
 
 #[derive(Queryable, QueryId, Debug)]
-pub struct Paginated<T> {
+pub struct PaginatedResult<T> {
     query: T,
     page: i64,
     per_page: i64,
 }
 
-impl<T> Paginated<T> {
+impl<T> PaginatedResult<T> {
     pub fn per_page(self, per_page: i64) -> Self {
-        Paginated { per_page, ..self }
+        PaginatedResult { per_page, ..self }
     }
 }
 
