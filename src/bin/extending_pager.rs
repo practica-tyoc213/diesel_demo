@@ -19,8 +19,7 @@ where
         out.push_sql("select *, count(*) over () from (");
         self.query.walk_ast(out.reborrow())?;
         out.push_sql(") LIMIT ");
-        // ask to disambiguate but got the overflow for requirement
-        out.push_bind_param::<BigInt, _>(&QueryDsl::limit(self.page, self.per_page))?;
+        out.push_bind_param(&self.limit(self.per_page))?;
         out.push_sql(" OFFSET ");
         out.push_bind_param::<BigInt, _>(&self.offset())?;
         Ok(())
@@ -35,12 +34,12 @@ impl<T: Query> Query for Paginated<T> {
 impl<T> RunQueryDsl<PgConnection> for Paginated<T> {}
 
 // FIXME: maybe implement this? but not this way?
-impl<T> QueryDsl for Paginated<T> {}
+// impl<T> QueryDsl for Paginated<T> {}
 impl<T: LimitDsl + LimitDsl<Output = T>> LimitDsl for Paginated<T> {
     type Output = Paginated<dsl::Limit<T>>;
 
     fn limit(self, limit: i64) -> Self::Output {
-        self
+        limit
     }
 }
 
