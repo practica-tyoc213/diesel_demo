@@ -1,5 +1,5 @@
 //use diesel::backend::{BindCollector, QueryBuilder};
-// use diesel::impl_query_id; // deprecated since 1.1.0
+use diesel::impl_query_id; // deprecated since 1.1.0
 use diesel::pg::Pg;
 use diesel::query_builder::{AsQuery, AstPass, Query, QueryFragment};
 use diesel::query_dsl::limit_dsl::LimitDsl;
@@ -7,46 +7,37 @@ use diesel::sql_types::BigInt;
 use diesel::{dsl, Expression};
 use diesel::{PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use diesel::{QueryId, Queryable};
+use diesel_demo::establish_connection;
+use diesel_demo::models::Post;
 use diesel_demo::schema::posts;
 
 // Implement `QueryFragment`
-impl<T> QueryFragment<Pg> for PaginatedResult<T>
+impl<T> QueryFragment<Pg> for PaginatedQuery<T>
 where
     T: QueryFragment<Pg>,
-    PaginatedResult<T>: LimitDsl,
 {
     fn walk_ast(&self, mut out: AstPass<Pg>) -> QueryResult<()> {
-        out.push_sql("select *, count(*) over () from (");
+        out.push_sql("SELECT *, COUNT(*) OVER () FROM (");
         self.query.walk_ast(out.reborrow())?;
-        out.push_sql(") LIMIT ");
-        out.push_bind_param(&self.limit(self.per_page))?;
+        out.push_sql(") as internal LIMIT ");
+        out.push_bind_param::<BigInt, _>(&self.per_page)?;
         out.push_sql(" OFFSET ");
-        out.push_bind_param::<BigInt, _>(&self.offset())?;
+        out.push_bind_param::<BigInt, _>(&self.page)?;
         Ok(())
     }
 }
 
-// Whenever you implement `QueryFragment` you need to implement `QueryId`
-impl<T: Query> Query for PaginatedResult<T> {
+impl_query_id!(PaginatedQuery<T>);
+
+impl<T: Query> Query for PaginatedQuery<T> {
     type SqlType = (T::SqlType, BigInt);
 }
 
-impl<T> RunQueryDsl<PgConnection> for PaginatedResult<T> {}
+impl<T> RunQueryDsl<PgConnection> for PaginatedQuery<T> {}
 
-// FIXME: maybe implement this? but not this way?
-// impl<T> QueryDsl for Paginated<T> {}
-impl<T: LimitDsl + LimitDsl<Output = T>> LimitDsl for PaginatedResult<T> {
-    type Output = PaginatedResult<dsl::Limit<T>>;
-
-    fn limit(self, limit: i64) -> Self::Output {
-        limit
-    }
-}
-
-// Using `trait Paginate` to implement all that
 pub trait Paginate: AsQuery + Sized {
-    fn paginate(self, page: i64) -> PaginatedResult<Self::Query> {
-        PaginatedResult {
+    fn paginate(self, page: i64) -> PaginatedQuery<Self::Query> {
+        PaginatedQuery {
             query: self.as_query(),
             page,
             per_page: DEFAULT_PER_PAGE,
@@ -55,22 +46,28 @@ pub trait Paginate: AsQuery + Sized {
 }
 
 impl<T: AsQuery> Paginate for T {}
+
 const DEFAULT_PER_PAGE: i64 = 10;
 
-#[derive(Queryable, QueryId, Debug)]
-pub struct PaginatedResult<T> {
+#[derive(Debug)]
+pub struct PaginatedQuery<T> {
     query: T,
     page: i64,
     per_page: i64,
 }
 
-impl<T> PaginatedResult<T> {
+impl<T> PaginatedQuery<T> {
     pub fn per_page(self, per_page: i64) -> Self {
-        PaginatedResult { per_page, ..self }
+        PaginatedQuery { per_page, ..self }
     }
 }
 
+// we can do better part
+
 fn main() {
-    let second = posts::table.paginate(3).per_page(2);
-    println!("count hay {:?}", &second);
+    let paginated_query = posts::table.paginate(3).per_page(2);
+    println!("count hay {:?}", paginated_query);
+    let conn = establish_connection();
+    let e: Result<Vec<Post>, _> = paginated_query.get_results(&conn);
+    println!("execution {:?}", e);
 }
