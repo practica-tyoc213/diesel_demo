@@ -2,10 +2,8 @@
 use diesel::impl_query_id; // deprecated since 1.1.0
 use diesel::pg::Pg;
 use diesel::query_builder::{AsQuery, AstPass, Query, QueryFragment};
-use diesel::query_dsl::limit_dsl::LimitDsl;
 use diesel::sql_types::BigInt;
-use diesel::{dsl, Expression};
-use diesel::{PgConnection, QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{PgConnection, QueryResult, RunQueryDsl};
 use diesel::{QueryId, Queryable};
 use diesel_demo::establish_connection;
 use diesel_demo::models::Post;
@@ -49,7 +47,7 @@ impl<T: AsQuery> Paginate for T {}
 
 const DEFAULT_PER_PAGE: i64 = 10;
 
-#[derive(Debug)]
+#[derive(Debug, Queryable)]
 pub struct PaginatedQuery<T> {
     query: T,
     page: i64,
@@ -62,12 +60,10 @@ impl<T> PaginatedQuery<T> {
     }
 }
 
-// we can do better part
-
 fn main() {
     let paginated_query = posts::table.paginate(3).per_page(2);
     println!("count hay {:?}", paginated_query);
     let conn = establish_connection();
-    let e: Result<Vec<Post>, _> = paginated_query.get_results(&conn);
+    let e: Vec<Post> = paginated_query.get_results(&conn).expect("not working");
     println!("execution {:?}", e);
 }

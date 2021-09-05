@@ -1,11 +1,5 @@
 use super::schema::posts;
-use chrono::NaiveDateTime;
-use diesel::expression::AsExpression;
-use diesel::pg::data_types::PgTimestamp;
-use diesel::query_builder::{BuildQueryResult, QueryBuilder};
-use diesel::sql_types::{Nullable, Timestamp, Timestamptz};
-use diesel::Expression;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::time::SystemTime;
 
 // if your struct has both
