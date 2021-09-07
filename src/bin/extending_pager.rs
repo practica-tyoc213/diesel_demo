@@ -48,7 +48,7 @@ impl<T: AsQuery> Paginate for T {}
 
 const DEFAULT_PER_PAGE: i64 = 10;
 
-#[derive(Debug, Queryable, QueryId)]
+#[derive(Debug, QueryId)]
 pub struct PaginatedQuery<T> {
     query: T,
     page: i64,
@@ -60,17 +60,18 @@ impl<T> PaginatedQuery<T> {
         PaginatedQuery { per_page, ..self }
     }
 
-    // fn load_and_count_pages<U>(self, conn: &PgConnection) -> QueryResult<(Vec<Post>, i64)>
-    // where
-    //     Self: LoadQuery<PgConnection, (U, i64)>,
-    // {
-    //     let per_page = self.per_page;
-    //     let results = self.load::<(U, i64)>(conn)?;
-    //     let total = results.get(0).map(|total| total).unwrap_or(0i64);
-    //     let records = results.into_iter().map(|(record, _)| record).collect();
-    //     let total_pages = (total as f64 / per_page as f64).ceil() as i64;
-    //     Ok((records, total_pages))
-    // }
+    fn load_and_count_pages<U>(self, conn: &PgConnection) -> QueryResult<(Vec<U>, i64)>
+    where
+        Self: LoadQuery<PgConnection, (U, i64)>,
+    {
+        let per_page = self.per_page;
+        let results: Vec<(U, i64)> = self.load(conn)?;
+        let total = results.get(0).map(|(_, total)| total).unwrap_or(&0);
+        let total = f64::from(*total as i32);
+        let records: Vec<U> = results.into_iter().map(|(record, _)| record).collect();
+        let total_pages = (total / per_page as f64).ceil() as i64;
+        Ok((records, total_pages))
+    }
 }
 
 fn main_what() {
@@ -85,11 +86,27 @@ fn main_what() {
     let records: Vec<Post> = results.into_iter().map(|(record, _)| record).collect();
 
     println!("execution {:?}", records);
+    let paginated_query = posts::table.paginate(3).per_page(2);
+    let records: (Vec<Post>, i64) = paginated_query.load_and_count_pages(&conn).expect("error");
+    println!("***load and count pages {:?}", records);
 }
 
-fn main() {
+fn main_old() {
     let conn = establish_connection();
     let paginated_query = posts::table.paginate(3).per_page(2);
     let results: Vec<(Post, i64)> = paginated_query.get_results(&conn).expect("not working");
     println!("------> {:?}", results);
+}
+
+fn main() {
+    let conn = establish_connection();
+    let results: Vec<(Post, i64)> = posts::table
+        .paginate(3)
+        .per_page(25)
+        .get_results(&conn)
+        .expect("error");
+    println!("{:?}", results);
+
+    main_what();
+    println!("--------------------------------------- ###");
 }

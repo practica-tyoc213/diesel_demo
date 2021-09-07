@@ -5,7 +5,7 @@ use std::time::SystemTime;
 // if your struct has both
 // #[derive(AsChangeset)] and #[derive(Identifiable)],
 // you will be able to use the save_changes method
-#[derive(Insertable, Queryable, AsChangeset, Identifiable, Debug)]
+#[derive(Insertable, Queryable, AsChangeset, Identifiable, Debug, Default)]
 pub struct Post {
     pub id: i32,
     pub title: String,
