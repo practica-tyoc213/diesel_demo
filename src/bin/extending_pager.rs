@@ -1,7 +1,8 @@
 //use diesel::backend::{BindCollector, QueryBuilder};
-use diesel::impl_query_id; // deprecated since 1.1.0
+//use diesel::impl_query_id; // deprecated since 1.1.0
 use diesel::pg::Pg;
 use diesel::query_builder::{AsQuery, AstPass, Query, QueryFragment};
+use diesel::query_dsl::LoadQuery;
 use diesel::sql_types::BigInt;
 use diesel::{PgConnection, QueryResult, RunQueryDsl};
 use diesel::{QueryId, Queryable};
@@ -25,7 +26,7 @@ where
     }
 }
 
-impl_query_id!(PaginatedQuery<T>);
+// impl_query_id!(PaginatedQuery<T>);
 
 impl<T: Query> Query for PaginatedQuery<T> {
     type SqlType = (T::SqlType, BigInt);
@@ -47,7 +48,7 @@ impl<T: AsQuery> Paginate for T {}
 
 const DEFAULT_PER_PAGE: i64 = 10;
 
-#[derive(Debug, Queryable)]
+#[derive(Debug, Queryable, QueryId)]
 pub struct PaginatedQuery<T> {
     query: T,
     page: i64,
@@ -58,12 +59,37 @@ impl<T> PaginatedQuery<T> {
     pub fn per_page(self, per_page: i64) -> Self {
         PaginatedQuery { per_page, ..self }
     }
+
+    // fn load_and_count_pages<U>(self, conn: &PgConnection) -> QueryResult<(Vec<Post>, i64)>
+    // where
+    //     Self: LoadQuery<PgConnection, (U, i64)>,
+    // {
+    //     let per_page = self.per_page;
+    //     let results = self.load::<(U, i64)>(conn)?;
+    //     let total = results.get(0).map(|total| total).unwrap_or(0i64);
+    //     let records = results.into_iter().map(|(record, _)| record).collect();
+    //     let total_pages = (total as f64 / per_page as f64).ceil() as i64;
+    //     Ok((records, total_pages))
+    // }
+}
+
+fn main_what() {
+    let paginated_query = posts::table.paginate(3).per_page(2);
+
+    println!("count hay {:?}", paginated_query);
+
+    let conn = establish_connection();
+    let results = paginated_query.get_results(&conn).expect("not working");
+    println!("------> {:?}", results);
+    let total = results.get(0).map(|(_, total)| total).unwrap_or(&0);
+    let records: Vec<Post> = results.into_iter().map(|(record, _)| record).collect();
+
+    println!("execution {:?}", records);
 }
 
 fn main() {
-    let paginated_query = posts::table.paginate(3).per_page(2);
-    println!("count hay {:?}", paginated_query);
     let conn = establish_connection();
-    let e: Vec<Post> = paginated_query.get_results(&conn).expect("not working");
-    println!("execution {:?}", e);
+    let paginated_query = posts::table.paginate(3).per_page(2);
+    let results: Vec<(Post, i64)> = paginated_query.get_results(&conn).expect("not working");
+    println!("------> {:?}", results);
 }
